@@ -11,10 +11,10 @@ const int PADDING = 5;
 const int WINDOW_PADDING = 50;
 
 enum GameState {
-    MENU,
-    INPUT_NAMES,
-    PLAYING,
-    GAME_OVER
+    MENU,  // Giao diện đầu tiên chọn kích thước bàn cờ
+    INPUT_NAMES,   // Nhập tên người chơi 
+    PLAYING,    // Trạng thái đang chơi
+    GAME_OVER   // Trò chơi kết thúc
 };
 
 GameState currentGameState = MENU;
@@ -24,6 +24,7 @@ string player2Name = "";
 
 TicTacToe* game = nullptr;
 
+// Hàm để vẽ văn bản ra màn hình cửa sổ
 void drawText(sf::RenderWindow& window, const string& text_str, const sf::Font& font, int char_size, sf::Color color, float x, float y, bool center = false) {
     sf::Text text(text_str, font, char_size);
     text.setFillColor(color);
@@ -37,6 +38,7 @@ void drawText(sf::RenderWindow& window, const string& text_str, const sf::Font& 
     window.draw(text);
 }
 
+// Hàm để vẽ ô nhập tên người chơi
 void drawInputBox(sf::RenderWindow& window, const string& label, const string& text, const sf::Font& font, sf::Vector2f pos, bool focused) {
     sf::RectangleShape box(sf::Vector2f(300, 40));
     box.setPosition(pos);
@@ -49,11 +51,13 @@ void drawInputBox(sf::RenderWindow& window, const string& label, const string& t
     drawText(window, text, font, 22, sf::Color::Black, pos.x + 10, pos.y + 8);
 }
 
+// Hàm kiểm tra chuột có nằm trên một button hay không
 bool isMouseOverButton(sf::Vector2f mousePos, sf::Vector2f buttonPos, sf::Vector2f buttonSize) {
     return mousePos.x > buttonPos.x && mousePos.x < buttonPos.x + buttonSize.x &&
            mousePos.y > buttonPos.y && mousePos.y < buttonPos.y + buttonSize.y;
 }
 
+// Hàm vẽ button có hiệu ứng đổi màu khi rê chuột vào
 void drawButtonWithHover(sf::RenderWindow& window, const string& text_str, const sf::Font& font, int char_size,
                          sf::Vector2f position, sf::Vector2f size, sf::Color baseColor, sf::Color hoverColor,
                          sf::Color textColor, sf::Vector2f mousePos) {
@@ -72,6 +76,8 @@ void drawButtonWithHover(sf::RenderWindow& window, const string& text_str, const
 }
 
 int main() {
+
+    // Tải ảnh background cho menu và gameplay
     sf::Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("background.jpg")) {
         std::cerr << "Error loading background.png\n";
@@ -84,9 +90,11 @@ int main() {
     }
     sf::Sprite gameplayBackgroundSprite(gameplayBackgroundTexture);
 
+    // Tạo cửa sổ game
     sf::RenderWindow window(sf::VideoMode(800, 600), "Tic Tac Toe Game");
     window.setFramerateLimit(60);
 
+    // Tải font chữ
     sf::Font font;
     if (!font.loadFromFile("Roboto-Regular.ttf")) {
         cerr << "Can't load font Roboto-Regular.ttf\n";
@@ -98,7 +106,8 @@ int main() {
 
     sf::Vector2f backToMenuPos;
     sf::Vector2f backToMenuSize;
-   
+    
+    // Vòng lặp để chạy trò chơi
     while (window.isOpen()) {
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         sf::Event event;
@@ -110,11 +119,14 @@ int main() {
         sf::Vector2f quitPos(centerX + 10, topY);
         backToMenuPos = sf::Vector2f(centerX - 120, topY + 50);
         backToMenuSize = sf::Vector2f(230, 40);
-
+        
+        // Vòng lặp để xử lý các input từ chuột, bàn phím
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) window.close();
-
+            
+            // Xử lý các trạng thái của game (MENU, INPUT NAME, PLAYING, GAME OVER) 
             if (currentGameState == MENU) {
+                //Phần lựa chọn kích thước bảng
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (isMouseOverButton(mousePos, {325, 200}, {150, 50})) {
                         selectedBoardSize = 3; currentGameState = INPUT_NAMES;
@@ -125,6 +137,7 @@ int main() {
                     }
                 }
             } else if (currentGameState == INPUT_NAMES) {
+                //Phần nhập tên người chơi
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (isMouseOverButton(mousePos, {250, 200}, {300, 40})) {
                         isTypingPlayer1 = true; isTypingPlayer2 = false;
@@ -134,12 +147,14 @@ int main() {
                         currentGameState = PLAYING;
                         if (game) delete game;
                         game = new TicTacToe(selectedBoardSize, player1Name, player2Name);
+                        //Điều chỉnh kích thước cửa sổ trò chơi phù hợp với kích thước bảng
                         window.setSize({(unsigned)(CELL_SIZE * selectedBoardSize + 2 * WINDOW_PADDING), (unsigned)(CELL_SIZE * selectedBoardSize + 2 * WINDOW_PADDING + 100)});
                         window.setView(sf::View(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y)));
                     } else {
                         isTypingPlayer1 = isTypingPlayer2 = false;
                     }
                 } else if (event.type == sf::Event::TextEntered) {
+                    //Nhập các kí tự tên 
                     if (event.text.unicode == 8) {
                         if (isTypingPlayer1 && !player1Name.empty()) player1Name.pop_back();
                         if (isTypingPlayer2 && !player2Name.empty()) player2Name.pop_back();
@@ -149,6 +164,7 @@ int main() {
                     }
                 }
             } else if (currentGameState == PLAYING) {
+                //Nhận diện vị trí click chuột để đánh cờ
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     int x = event.mouseButton.x - WINDOW_PADDING;
                     int y = event.mouseButton.y - WINDOW_PADDING;
@@ -173,6 +189,7 @@ int main() {
                     }
                 }
             } else if (currentGameState == GAME_OVER) {
+                //Xử lý tại các nút play again, quit, back to menu sau khi ván chơi kết thúc
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                   if (isMouseOverButton(mousePos, playAgainPos, {140, 40})) {
                         game->resetGame();
@@ -194,12 +211,13 @@ int main() {
         }
 
         window.clear();
+        // Set scale cho đúng kích thước cửa sổ
         backgroundSprite.setScale(
         float(window.getSize().x) / backgroundTexture.getSize().x,
         float(window.getSize().y) / backgroundTexture.getSize().y
         );
 
-       // Set scale cho đúng kích thước cửa sổ
+        // Hiển thị màn hình tương ứng với trạng thái game hiện tại
         if (currentGameState == PLAYING || currentGameState == GAME_OVER) {
             gameplayBackgroundSprite.setScale(
                 float(window.getSize().x) / gameplayBackgroundTexture.getSize().x,
@@ -213,8 +231,8 @@ int main() {
             );
             window.draw(backgroundSprite);
         }
- // Vẽ ảnh nền trước các thành phần giao diện
 
+         // Vẽ giao diện
         if (currentGameState == MENU) {
             drawText(window, "TICTACTOE GAME", font, 48, sf::Color(100, 100, 250), window.getSize().x / 2, 60, true);
             drawText(window, "Select Board Size", font, 32, sf::Color::Black, window.getSize().x / 2, 120, true);
