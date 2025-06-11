@@ -72,6 +72,18 @@ void drawButtonWithHover(sf::RenderWindow& window, const string& text_str, const
 }
 
 int main() {
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("background.jpg")) {
+        std::cerr << "Error loading background.png\n";
+    }
+    sf::Sprite backgroundSprite(backgroundTexture);
+
+    sf::Texture gameplayBackgroundTexture;
+    if (!gameplayBackgroundTexture.loadFromFile("gameplay_background.jpg")) {
+        std::cerr << "Error loading gameplay_background.png\n";
+    }
+    sf::Sprite gameplayBackgroundSprite(gameplayBackgroundTexture);
+
     sf::RenderWindow window(sf::VideoMode(800, 600), "Tic Tac Toe Game");
     window.setFramerateLimit(60);
 
@@ -181,7 +193,27 @@ int main() {
             }
         }
 
-        window.clear(sf::Color::White);
+        window.clear();
+        backgroundSprite.setScale(
+        float(window.getSize().x) / backgroundTexture.getSize().x,
+        float(window.getSize().y) / backgroundTexture.getSize().y
+        );
+
+       // Set scale cho đúng kích thước cửa sổ
+        if (currentGameState == PLAYING || currentGameState == GAME_OVER) {
+            gameplayBackgroundSprite.setScale(
+                float(window.getSize().x) / gameplayBackgroundTexture.getSize().x,
+                float(window.getSize().y) / gameplayBackgroundTexture.getSize().y
+            );
+            window.draw(gameplayBackgroundSprite);
+        } else {
+            backgroundSprite.setScale(
+                float(window.getSize().x) / backgroundTexture.getSize().x,
+                float(window.getSize().y) / backgroundTexture.getSize().y
+            );
+            window.draw(backgroundSprite);
+        }
+ // Vẽ ảnh nền trước các thành phần giao diện
 
         if (currentGameState == MENU) {
             drawText(window, "TICTACTOE GAME", font, 48, sf::Color(100, 100, 250), window.getSize().x / 2, 60, true);
@@ -253,6 +285,3 @@ int main() {
     if (game) delete game;
     return 0;
 }
-
-
-
